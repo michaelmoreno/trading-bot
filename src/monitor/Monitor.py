@@ -1,9 +1,7 @@
 from typing import List
-from connectors.Connector import Connector
-from orderbook.Orderbook import Orderbook
+from exchanges.Exchange import Exchange
 
 
 class Monitor:
-    connectors: List[Connector]
-    orderbooks: List[Orderbook]
+    exchanges: List[Exchange]
     

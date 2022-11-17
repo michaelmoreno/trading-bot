@@ -1,7 +1,10 @@
+from typing import Dict
+from orderbook.Orderbook import Orderbook
 from src.connectors.Connector import Connector
 
 class Exchange:
     connector: Connector
+    orderbooks: Dict[str, Orderbook]
 
     def __init__(self, connector: Connector):
         self.connector = connector
