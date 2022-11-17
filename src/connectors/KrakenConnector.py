@@ -16,6 +16,11 @@ class KrakenConnector:
         self.api_priv = api_priv
         self._offered_pairs = []
 
+    @property
+    def offered_pairs(self) -> List[Tuple[str, str]]:
+        result = requests.get(f'{self.base_http}/0/public/AssetPairs').json()['result']
+        return [(pair['base'], pair['quote']) for pair in result.values()]
+
     def generate_signature(self, urlpath: str, payload: dict) -> str:
         postdata = urllib.parse.urlencode(payload)
         encoded = (payload['nonce'] + postdata).encode()
