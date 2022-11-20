@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from typing import Dict, List, Tuple
+from decimal import Decimal
 import requests
 import base64
 import hashlib
@@ -7,40 +8,25 @@ import urllib.parse
 import time
 from websocket import WebSocketApp
 from .ws_handlers.Handler import Handler
+from .Connector import Connector
 
-class KrakenConnector:
+class KrakenConnector(Connector):
     base_http: str = 'https://api.kraken.com'
     base_ws: str = 'wss://ws.kraken.com'
-    _offered_pairs: List[Tuple[str, str]]
-    message_handlers: List[Handler]
 
-    def __init__(self, api_key: str, api_priv: str, message_handlers: List[Handler]):
+    def __init__(self, api_key: str, api_priv: str, message_handlers: List[Handler], desired_pairs: List[Tuple[str, str]]):
+        super().__init__(
+            self.base_http, self.base_ws, message_handlers, desired_pairs)
         self.api_key = api_key
         self.api_priv = api_priv
-        self._offered_pairs = []
-        self.message_handlers = message_handlers
 
-    @property
-    def offered_pairs(self) -> List[Tuple[str, str]]:
+    def get_offered_pairs(self) -> List[Tuple[str, str]]:
         result = requests.get(f'{self.base_http}/0/public/AssetPairs').json()['result']
         return [(pair['base'], pair['quote']) for pair in result.values()]
 
-    def start_websocket(self):
-        self.ws = WebSocketApp(
-            self.base_ws,
-            on_open=self.handle_open,
-            on_message=self.handle_message,
-            on_error=lambda ws, err: print(err))
-        self.ws.run_forever()
-
-    def handle_message(self, ws: WebSocketApp, message: str):
-        for handler in self.message_handlers:
-            if handler.handle(self.ws, message):
-                return
-        raise Exception(f'No Handler found for message: {message}')
-
-    def handle_open(self, ws: WebSocketApp):
-        self.ws.send('{"event":"subscribe", "pair":["XBT/USD"], "subscription":{"name":"ticker"}}')
+    def subscribe(self):
+        joined = ','.join([f'{base}/{quote}' for base, quote in self.desired_pairs])
+        self.ws.send('{"event":"subscribe", "pair":'+joined+', "subscription":{"name":"ticker"}}')
 
     def generate_signature(self, urlpath: str, payload: dict) -> str:
         postdata = urllib.parse.urlencode(payload)
@@ -59,3 +45,9 @@ class KrakenConnector:
         }
         res = requests.post(self.base_http + uri_path, headers=headers, data=payload)
         return res
+
+    def request_balance(self) -> dict:
+        return self.request('/0/private/Balance', {}).json()['result']
+
+    def request_trade_history(self) -> requests.models.Response:
+        return self.request('/0/private/TradesHistory', {}).json()['result']

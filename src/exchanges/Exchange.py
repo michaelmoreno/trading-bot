@@ -1,6 +1,7 @@
+from decimal import Decimal
 from typing import Dict
 from orderbook.Orderbook import Orderbook
-from src.connectors.Connector import Connector
+from connectors.Connector import Connector
 
 class Exchange:
     connector: Connector
@@ -10,13 +11,13 @@ class Exchange:
         self.connector = connector
     
     @property
-    def balance(self):
-        return self.connector.request('/0/private/Balance', {}).json()
+    def balance(self) -> Dict[str, Decimal]:
+        return self.connector.get_balance()
 
     @property
     def trades_history(self):
-        return self.connector.request('/0/private/TradesHistory', {}).json()
+        return self.connector.get_trade_history()
 
     @property
     def offered_pairs(self):
-        return self.connector.offered_pairs
+        return self.connector.get_offered_pairs()
