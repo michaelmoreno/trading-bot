@@ -23,19 +23,19 @@ class BinanceUSConnector(Connector):
         joined = ','.join([f'{base}/{quote}' for base, quote in self.desired_markets])
         self.ws.send('{"event":"subscribe", "market":'+joined+', "subscription":{"name":"ticker"}}')
 
-    def generate_signature(self, data):
-        postdata = urllib.parse.urlencode(data)
+    def generate_signature(self, payload: dict) -> str:
+        postdata = urllib.parse.urlencode(payload)
         message = postdata.encode()
         byte_key = bytes(self.api_priv, 'UTF-8')
         mac = hmac.new(byte_key, message, hashlib.sha256).hexdigest()
         return mac
 
-    def request(self, uri_path, data) -> requests.models.Response:
-        data['timestamp'] = int(round(time.time() * 1000))
+    def request(self, uri_path: str, payload: dict) -> requests.models.Response:
+        payload['timestamp'] = int(round(time.time() * 1000))
         headers = {'X-MBX-APIKEY': self.api_key}
-        signature = self.generate_signature(data) 
+        signature = self.generate_signature(payload) 
         params={
-            **data,
+            **payload,
             "signature": signature,
             }           
         req = requests.get((self.base_http + uri_path), params=params, headers=headers)
