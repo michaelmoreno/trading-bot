@@ -14,19 +14,19 @@ class KrakenConnector(Connector):
     base_http: str = 'https://api.kraken.com'
     base_ws: str = 'wss://ws.kraken.com'
 
-    def __init__(self, api_key: str, api_priv: str, message_handlers: List[Handler], desired_pairs: List[Tuple[str, str]]):
+    def __init__(self, api_key: str, api_priv: str, message_handlers: List[Handler], desired_markets: List[Tuple[str, str]]):
         super().__init__(
-            self.base_http, self.base_ws, message_handlers, desired_pairs)
+            self.base_http, self.base_ws, message_handlers, desired_markets)
         self.api_key = api_key
         self.api_priv = api_priv
 
-    def get_offered_pairs(self) -> List[Tuple[str, str]]:
-        result = requests.get(f'{self.base_http}/0/public/AssetPairs').json()['result']
-        return [(pair['base'], pair['quote']) for pair in result.values()]
+    def get_offered_markets(self) -> List[Tuple[str, str]]:
+        result = requests.get(f'{self.base_http}/0/public/Assetmarkets').json()['result']
+        return [(market['base'], market['quote']) for market in result.values()]
 
     def subscribe(self):
-        joined = ','.join([f'{base}/{quote}' for base, quote in self.desired_pairs])
-        self.ws.send('{"event":"subscribe", "pair":'+joined+', "subscription":{"name":"ticker"}}')
+        joined = ','.join([f'{base}/{quote}' for base, quote in self.desired_markets])
+        self.ws.send('{"event":"subscribe", "market":'+joined+', "subscription":{"name":"ticker"}}')
 
     def generate_signature(self, urlpath: str, payload: dict) -> str:
         postdata = urllib.parse.urlencode(payload)

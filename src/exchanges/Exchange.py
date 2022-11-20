@@ -19,5 +19,5 @@ class Exchange:
         return self.connector.get_trade_history()
 
     @property
-    def offered_pairs(self):
-        return self.connector.get_offered_pairs()
+    def offered_markets(self):
+        return self.connector.get_offered_markets()

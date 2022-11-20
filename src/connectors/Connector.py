@@ -12,11 +12,11 @@ class Connector(ABC):
     message_handlers: List[Handler]
     ws: WebSocketApp
 
-    def __init__(self, base_http: str, base_ws: str, message_handlers: List[Handler], desired_pairs: List[Tuple[str, str]]):
+    def __init__(self, base_http: str, base_ws: str, message_handlers: List[Handler], desired_markets: List[Tuple[str, str]]):
         self.base_http = base_http
         self.base_ws = base_ws
         self.message_handlers = message_handlers
-        self.desired_pairs = desired_pairs
+        self.desired_markets = desired_markets
 
     @abstractmethod
     def request(self, uri_path: str, payload: dict) -> requests.models.Response:
@@ -31,11 +31,11 @@ class Connector(ABC):
         ...
     
     @abstractmethod
-    def get_offered_pairs(self) -> List[Tuple[str, str]]:
+    def get_offered_markets(self) -> List[Tuple[str, str]]:
         ...
 
     @abstractmethod
-    def subscribe(self, pairs: List[Tuple[str, str]]):
+    def subscribe(self, markets: List[Tuple[str, str]]):
         ...
 
     def start_websocket(self):
@@ -47,7 +47,7 @@ class Connector(ABC):
         self.ws.run_forever()
 
     def handle_open(self, ws: WebSocketApp):
-        self.subscribe(self.desired_pairs)
+        self.subscribe(self.desired_markets)
 
     def handle_message(self, ws: WebSocketApp, message: str):
         for handler in self.message_handlers:
